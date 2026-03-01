@@ -12,12 +12,13 @@ async function generateOrderNumber(): Promise<string> {
 }
 
 router.get('/', async (req: AuthRequest, res: Response) => {
-  const { status, accountId, page = '1', limit = '20' } = req.query
+  const { status, accountId, search, page = '1', limit = '20' } = req.query
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string)
   const where: Record<string, unknown> = {}
   if (req.user!.role === 'SALES') where.ownerId = req.user!.userId
   if (status) where.status = status
   if (accountId) where.accountId = accountId
+  if (search) where.number = { contains: search as string, mode: 'insensitive' }
   const [data, total] = await Promise.all([
     prisma.order.findMany({
       where,

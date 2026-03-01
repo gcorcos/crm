@@ -10,6 +10,7 @@ import OpportunitiesPage from './pages/Opportunities/OpportunitiesPage'
 import ActivitiesList from './pages/Activities/ActivitiesList'
 import ContractsList from './pages/Contracts/ContractsList'
 import OrdersList from './pages/Orders/OrdersList'
+import UsersList from './pages/Users/UsersList'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { accessToken } = useAuthStore()
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="activities" element={<ActivitiesList />} />
           <Route path="contracts" element={<ContractsList />} />
           <Route path="orders" element={<OrdersList />} />
+          <Route path="users" element={<UsersList />} />
         </Route>
       </Routes>
     </BrowserRouter>

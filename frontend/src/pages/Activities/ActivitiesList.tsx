@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { activitiesApi } from '../../api'
+import { activitiesApi, leadsApi, opportunitiesApi, contactsApi, accountsApi } from '../../api'
 import { Activity } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
@@ -14,6 +14,23 @@ const TYPE_LABELS: Record<string, string> = { CALL: 'Appel', EMAIL: 'Email', MEE
 const STATUSES = ['TODO', 'IN_PROGRESS', 'DONE', 'CANCELLED']
 const RELATED_TYPES = ['LEAD', 'OPPORTUNITY', 'CONTACT', 'ACCOUNT']
 
+const RELATED_TYPE_LABELS: Record<string, string> = {
+  LEAD: 'Lead', OPPORTUNITY: 'Opportunité', CONTACT: 'Contact', ACCOUNT: 'Compte',
+}
+
+function useRelatedEntities(relatedType: string) {
+  const leads = useQuery({ queryKey: ['leads-all'], queryFn: () => leadsApi.list({ limit: 200 }), enabled: relatedType === 'LEAD' })
+  const opps = useQuery({ queryKey: ['opportunities-all'], queryFn: () => opportunitiesApi.list({ limit: 200 }), enabled: relatedType === 'OPPORTUNITY' })
+  const contacts = useQuery({ queryKey: ['contacts-all'], queryFn: () => contactsApi.list({ limit: 200 }), enabled: relatedType === 'CONTACT' })
+  const accounts = useQuery({ queryKey: ['accounts-all'], queryFn: () => accountsApi.list({ limit: 200 }), enabled: relatedType === 'ACCOUNT' })
+
+  if (relatedType === 'LEAD') return (leads.data?.data ?? []).map((l) => ({ id: l.id, label: `${l.firstName} ${l.lastName}${l.company ? ` — ${l.company}` : ''}` }))
+  if (relatedType === 'OPPORTUNITY') return (opps.data?.data ?? []).map((o) => ({ id: o.id, label: o.name }))
+  if (relatedType === 'CONTACT') return (contacts.data?.data ?? []).map((c) => ({ id: c.id, label: `${c.firstName} ${c.lastName}` }))
+  if (relatedType === 'ACCOUNT') return (accounts.data?.data ?? []).map((a) => ({ id: a.id, label: a.name }))
+  return []
+}
+
 function ActivityForm({ activity, onClose }: { activity?: Activity; onClose: () => void }) {
   const qc = useQueryClient()
   const [form, setForm] = useState({
@@ -26,16 +43,30 @@ function ActivityForm({ activity, onClose }: { activity?: Activity; onClose: () 
     relatedId: activity?.relatedId ?? '',
   })
   const [error, setError] = useState('')
+
+  const entities = useRelatedEntities(form.relatedType)
+
   const mutation = useMutation({
     mutationFn: (data: object) => activity ? activitiesApi.update(activity.id, data) : activitiesApi.create(data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['activities'] }); onClose() },
     onError: (e: { response?: { data?: { error?: string } } }) => setError(e.response?.data?.error ?? 'Erreur'),
   })
-  const f = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm((p) => ({ ...p, [k]: e.target.value }))
+
+  const f = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const val = e.target.value
+    setForm((p) => ({ ...p, [k]: val, ...(k === 'relatedType' ? { relatedId: '' } : {}) }))
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const fkMap: Record<string, string> = {
+      LEAD: 'leadId', OPPORTUNITY: 'opportunityId', CONTACT: 'contactId', ACCOUNT: 'accountId',
+    }
+    mutation.mutate({ ...form, [fkMap[form.relatedType]]: form.relatedId })
+  }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(form) }} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Type</label>
@@ -55,12 +86,18 @@ function ActivityForm({ activity, onClose }: { activity?: Activity; onClose: () 
       <div><label className="label">Date d'échéance</label><input type="date" className="input" value={form.dueDate} onChange={f('dueDate')} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label">Entité liée</label>
+          <label className="label">Type d'entité</label>
           <select className="input" value={form.relatedType} onChange={f('relatedType')}>
-            {RELATED_TYPES.map((r) => <option key={r} value={r}>{r}</option>)}
+            {RELATED_TYPES.map((r) => <option key={r} value={r}>{RELATED_TYPE_LABELS[r]}</option>)}
           </select>
         </div>
-        <div><label className="label">ID entité *</label><input className="input" value={form.relatedId} onChange={f('relatedId')} placeholder="ID de l'entité" required /></div>
+        <div>
+          <label className="label">Entité liée *</label>
+          <select className="input" value={form.relatedId} onChange={f('relatedId')} required>
+            <option value="">— Sélectionner —</option>
+            {entities.map((e) => <option key={e.id} value={e.id}>{e.label}</option>)}
+          </select>
+        </div>
       </div>
       {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}
       <div className="flex gap-2 justify-end pt-2">

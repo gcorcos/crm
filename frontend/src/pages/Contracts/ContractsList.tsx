@@ -5,7 +5,7 @@ import { Contract } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -72,12 +72,13 @@ function fmt(n: number) {
 export default function ContractsList() {
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState('')
+  const [search, setSearch] = useState('')
   const [modal, setModal] = useState<null | 'create' | 'edit'>(null)
   const [selected, setSelected] = useState<Contract | null>(null)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['contracts', { page, status }],
-    queryFn: () => contractsApi.list({ page, status: status || undefined }),
+    queryKey: ['contracts', { page, status, search }],
+    queryFn: () => contractsApi.list({ page, status: status || undefined, search: search || undefined }),
   })
   const qc = useQueryClient()
   const deleteMutation = useMutation({
@@ -92,10 +93,17 @@ export default function ContractsList() {
         <h1 className="text-2xl font-bold">Contrats</h1>
         <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouveau contrat</button>
       </div>
-      <select className="input w-44" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}>
-        <option value="">Tous statuts</option>
-        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
+      <div className="flex gap-3">
+        <div className="relative max-w-xs flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input className="input pl-9" placeholder="Rechercher par N°..." value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+        </div>
+        <select className="input w-44" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}>
+          <option value="">Tous statuts</option>
+          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
       <div className="card p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
