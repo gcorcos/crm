@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALES
+  READONLY
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  COLD_CALL
+  EMAIL
+  SOCIAL
+  EVENT
+  OTHER
+}
+
+enum OpportunityStage {
+  PROSPECTING
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  NOTE
+}
+
+enum ActivityStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum ContractStatus {
+  DRAFT
+  REVIEW
+  SIGNED
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  DELIVERED
+  CANCELLED
+}
+
+enum RelatedType {
+  LEAD
+  OPPORTUNITY
+  CONTACT
+  ACCOUNT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  firstName    String
+  lastName     String
+  role         Role     @default(SALES)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leads         Lead[]
+  accounts      Account[]
+  contacts      Contact[]
+  opportunities Opportunity[]
+  activities    Activity[]
+  contracts     Contract[]
+  orders        Order[]
+  reports       Report[]
+  dashboards    Dashboard[]
+
+  @@map("users")
+}
+
+model Lead {
+  id          String      @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  company     String?
+  source      LeadSource  @default(OTHER)
+  status      LeadStatus  @default(NEW)
+  score       Int         @default(0)
+  notes       String?
+  convertedAt DateTime?
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  activities Activity[]
+
+  @@map("leads")
+}
+
+model Account {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  industry    String?
+  size        String?
+  website     String?
+  address     String?
+  city        String?
+  country     String?
+  notes       String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contacts      Contact[]
+  opportunities Opportunity[]
+  contracts     Contract[]
+  orders        Order[]
+  activities    Activity[]
+
+  @@map("accounts")
+}
+
+model Contact {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  title       String?
+  role        String?
+  accountId   String
+  account     Account  @relation(fields: [accountId], references: [id])
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  opportunities Opportunity[]
+  activities    Activity[]
+
+  @@unique([email, accountId])
+  @@map("contacts")
+}
+
+model Opportunity {
+  id           String           @id @default(cuid())
+  name         String
+  amount       Decimal          @db.Decimal(15, 2)
+  currency     String           @default("EUR")
+  stage        OpportunityStage @default(PROSPECTING)
+  probability  Int              @default(0)
+  closeDate    DateTime
+  lostReason   String?
+  notes        String?
+  accountId    String
+  account      Account          @relation(fields: [accountId], references: [id])
+  contactId    String?
+  contact      Contact?         @relation(fields: [contactId], references: [id])
+  ownerId      String
+  owner        User             @relation(fields: [ownerId], references: [id])
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  activities Activity[]
+  contracts  Contract[]
+
+  @@map("opportunities")
+}
+
+model Activity {
+  id          String         @id @default(cuid())
+  type        ActivityType
+  subject     String
+  description String?
+  status      ActivityStatus @default(TODO)
+  dueDate     DateTime?
+  doneAt      DateTime?
+  relatedType RelatedType
+  relatedId   String
+  ownerId     String
+  owner       User           @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  lead        Lead?        @relation(fields: [leadId], references: [id])
+  leadId      String?
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id])
+  opportunityId String?
+  contact     Contact?     @relation(fields: [contactId], references: [id])
+  contactId   String?
+  account     Account?     @relation(fields: [accountId], references: [id])
+  accountId   String?
+
+  @@map("activities")
+}
+
+model Contract {
+  id            String         @id @default(cuid())
+  number        String         @unique
+  amount        Decimal        @db.Decimal(15, 2)
+  status        ContractStatus @default(DRAFT)
+  startDate     DateTime?
+  endDate       DateTime?
+  signedAt      DateTime?
+  notes         String?
+  accountId     String
+  account       Account        @relation(fields: [accountId], references: [id])
+  opportunityId String?
+  opportunity   Opportunity?   @relation(fields: [opportunityId], references: [id])
+  ownerId       String
+  owner         User           @relation(fields: [ownerId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  orders Order[]
+
+  @@map("contracts")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  number      String      @unique
+  totalAmount Decimal     @db.Decimal(15, 2)
+  status      OrderStatus @default(PENDING)
+  orderDate   DateTime    @default(now())
+  notes       String?
+  accountId   String
+  account     Account     @relation(fields: [accountId], references: [id])
+  contractId  String?
+  contract    Contract?   @relation(fields: [contractId], references: [id])
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  filters   Json     @default("{}")
+  columns   Json     @default("[]")
+  shared    Boolean  @default(false)
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reports")
+}
+
+model Dashboard {
+  id        String   @id @default(cuid())
+  name      String
+  widgets   Json     @default("[]")
+  isDefault Boolean  @default(false)
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("dashboards")
+}
