@@ -5,7 +5,8 @@ import { Contract } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search, AlertTriangle } from 'lucide-react'
+import { Plus, Search, AlertTriangle, Download } from 'lucide-react'
+import { downloadCsv } from '../../utils/exportCsv'
 import { format, differenceInDays } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -98,11 +99,28 @@ export default function ContractsList() {
   })
   const close = () => { setModal(null); setSelected(null) }
 
+  async function handleExport() {
+    const all = await contractsApi.list({ status: status || undefined, search: search || undefined, limit: 1000 })
+    downloadCsv(all.data.map((c: Contract) => ({
+      numero: c.number, compte: c.account?.name ?? '',
+      montant: Number(c.amount), statut: c.status,
+      debut: c.startDate ? new Date(c.startDate).toLocaleDateString('fr-FR') : '',
+      fin: c.endDate ? new Date(c.endDate).toLocaleDateString('fr-FR') : '',
+    })), 'contrats', [
+      { key: 'numero', label: 'N°' }, { key: 'compte', label: 'Compte' },
+      { key: 'montant', label: 'Montant (€)' }, { key: 'statut', label: 'Statut' },
+      { key: 'debut', label: 'Début' }, { key: 'fin', label: 'Fin' },
+    ])
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Contrats</h1>
-        <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouveau contrat</button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} className="btn-secondary"><Download size={15} /> Export CSV</button>
+          <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouveau contrat</button>
+        </div>
       </div>
       <div className="flex gap-3">
         <div className="relative max-w-xs flex-1">

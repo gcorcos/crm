@@ -5,7 +5,8 @@ import { Order } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Download } from 'lucide-react'
+import { downloadCsv } from '../../utils/exportCsv'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -104,11 +105,28 @@ export default function OrdersList() {
   })
   const close = () => { setModal(null); setSelected(null) }
 
+  async function handleExport() {
+    const all = await ordersApi.list({ status: status || undefined, search: search || undefined, limit: 1000 })
+    downloadCsv(all.data.map((o: Order) => ({
+      numero: o.number, compte: o.account?.name ?? '',
+      montant: Number(o.totalAmount), statut: o.status,
+      date: new Date(o.orderDate).toLocaleDateString('fr-FR'),
+      contrat: o.contract?.number ?? '',
+    })), 'commandes', [
+      { key: 'numero', label: 'N°' }, { key: 'compte', label: 'Compte' },
+      { key: 'montant', label: 'Montant (€)' }, { key: 'statut', label: 'Statut' },
+      { key: 'date', label: 'Date' }, { key: 'contrat', label: 'Contrat' },
+    ])
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Commandes</h1>
-        <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouvelle commande</button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} className="btn-secondary"><Download size={15} /> Export CSV</button>
+          <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouvelle commande</button>
+        </div>
       </div>
       <div className="flex gap-3">
         <div className="relative max-w-xs flex-1">

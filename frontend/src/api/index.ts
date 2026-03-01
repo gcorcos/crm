@@ -88,6 +88,15 @@ export const ordersApi = {
   remove: (id: string) => api.delete(`/orders/${id}`),
 }
 
+// Reports
+export const reportsApi = {
+  list: () => api.get('/reports').then((r) => r.data),
+  create: (data: object) => api.post('/reports', data).then((r) => r.data),
+  update: (id: string, data: object) => api.patch(`/reports/${id}`, data).then((r) => r.data),
+  remove: (id: string) => api.delete(`/reports/${id}`),
+  revenue: (params: object) => api.get('/reports/revenue', { params }).then((r) => r.data),
+}
+
 // Dashboard
 export const dashboardApi = {
   kpi: () => api.get<KpiData>('/dashboard/kpi').then((r) => r.data),

@@ -4,7 +4,8 @@ import { accountsApi } from '../../api'
 import { Account } from '../../types'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search, Building2 } from 'lucide-react'
+import { Plus, Search, Building2, Download } from 'lucide-react'
+import { downloadCsv } from '../../utils/exportCsv'
 
 const INDUSTRIES = ['Tech', 'Finance', 'Santé', 'Retail', 'Industrie', 'Autre']
 
@@ -86,11 +87,26 @@ export default function AccountsList() {
 
   const close = () => { setModal(null); setSelected(null) }
 
+  async function handleExport() {
+    const all = await accountsApi.list({ search: search || undefined, limit: 1000 })
+    downloadCsv(all.data.map((a: Account) => ({
+      nom: a.name, secteur: a.industry ?? '', taille: a.size ?? '',
+      ville: a.city ?? '', pays: a.country ?? '', site: a.website ?? '',
+    })), 'comptes', [
+      { key: 'nom', label: 'Nom' }, { key: 'secteur', label: 'Secteur' },
+      { key: 'taille', label: 'Taille' }, { key: 'ville', label: 'Ville' },
+      { key: 'pays', label: 'Pays' }, { key: 'site', label: 'Site web' },
+    ])
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Comptes</h1>
-        <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouveau compte</button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} className="btn-secondary"><Download size={15} /> Export CSV</button>
+          <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouveau compte</button>
+        </div>
       </div>
       <div className="relative max-w-sm">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

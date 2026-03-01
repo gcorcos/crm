@@ -5,7 +5,8 @@ import { Activity } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, AlertTriangle } from 'lucide-react'
+import { Plus, AlertTriangle, Download } from 'lucide-react'
+import { downloadCsv } from '../../utils/exportCsv'
 import { format, isPast } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -132,11 +133,27 @@ export default function ActivitiesList() {
   })
   const close = () => { setModal(null); setSelected(null) }
 
+  async function handleExport() {
+    const all = await activitiesApi.list({ status: status || undefined, type: type || undefined, limit: 1000 })
+    downloadCsv(all.data.map((a: Activity) => ({
+      type: TYPE_LABELS[a.type], sujet: a.subject,
+      statut: a.status, echeance: a.dueDate ? new Date(a.dueDate).toLocaleDateString('fr-FR') : '',
+      assigne: a.owner ? `${a.owner.firstName} ${a.owner.lastName}` : '',
+    })), 'activites', [
+      { key: 'type', label: 'Type' }, { key: 'sujet', label: 'Sujet' },
+      { key: 'statut', label: 'Statut' }, { key: 'echeance', label: 'Échéance' },
+      { key: 'assigne', label: 'Assigné à' },
+    ])
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Activités</h1>
-        <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouvelle activité</button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} className="btn-secondary"><Download size={15} /> Export CSV</button>
+          <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouvelle activité</button>
+        </div>
       </div>
       <div className="flex gap-3">
         <select className="input w-40" value={type} onChange={(e) => { setType(e.target.value); setPage(1) }}>

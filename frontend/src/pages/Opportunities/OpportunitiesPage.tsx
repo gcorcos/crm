@@ -5,7 +5,8 @@ import { Opportunity } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search, LayoutGrid, List, FileText } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, FileText, Download } from 'lucide-react'
+import { downloadCsv } from '../../utils/exportCsv'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -218,6 +219,19 @@ export default function OpportunitiesPage() {
 
   function openContract(opp: Opportunity) { setSelected(opp); setModal('contract') }
 
+  async function handleExport() {
+    const all = await opportunitiesApi.list({ stage: stage || undefined, search: search || undefined, limit: 1000 })
+    downloadCsv(all.data.map((o: Opportunity) => ({
+      nom: o.name, compte: o.account?.name ?? '', montant: Number(o.amount),
+      etape: STAGE_LABELS[o.stage], probabilite: o.probability,
+      cloture: new Date(o.closeDate).toLocaleDateString('fr-FR'),
+    })), 'opportunites', [
+      { key: 'nom', label: 'Opportunité' }, { key: 'compte', label: 'Compte' },
+      { key: 'montant', label: 'Montant (€)' }, { key: 'etape', label: 'Étape' },
+      { key: 'probabilite', label: 'Probabilité (%)' }, { key: 'cloture', label: 'Clôture' },
+    ])
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -231,6 +245,7 @@ export default function OpportunitiesPage() {
               <List size={15} /> Liste
             </button>
           </div>
+          {view === 'list' && <button onClick={handleExport} className="btn-secondary"><Download size={15} /> Export CSV</button>}
           <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouvelle opportunité</button>
         </div>
       </div>

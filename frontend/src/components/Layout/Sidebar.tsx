@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Building2, Contact, Target,
-  CheckSquare, FileText, ShoppingCart, LogOut, TrendingUp,
+  CheckSquare, FileText, ShoppingCart, LogOut, TrendingUp, BarChart2,
 } from 'lucide-react'
 import { useAuthStore } from '../../store/auth'
 import clsx from 'clsx'
@@ -15,6 +15,7 @@ const nav = [
   { to: '/activities', label: 'Activités', icon: CheckSquare },
   { to: '/contracts', label: 'Contrats', icon: FileText },
   { to: '/orders', label: 'Commandes', icon: ShoppingCart },
+  { to: '/reports', label: 'Rapports', icon: BarChart2 },
 ]
 
 const adminNav = [

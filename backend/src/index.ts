@@ -13,6 +13,7 @@ import activityRoutes from './routes/activities'
 import contractRoutes from './routes/contracts'
 import orderRoutes from './routes/orders'
 import dashboardRoutes from './routes/dashboard'
+import reportRoutes from './routes/reports'
 
 const app = express()
 const PORT = process.env.PORT ?? 4000
@@ -31,6 +32,7 @@ app.use('/api/activities', activityRoutes)
 app.use('/api/contracts', contractRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/reports', reportRoutes)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
 

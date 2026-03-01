@@ -5,7 +5,8 @@ import { Lead } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search, RefreshCw } from 'lucide-react'
+import { Plus, Search, RefreshCw, Download } from 'lucide-react'
+import { downloadCsv } from '../../utils/exportCsv'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -127,13 +128,33 @@ export default function LeadsList() {
   function openConvert(lead: Lead) { setSelected(lead); setModal('convert') }
   function close() { setModal(null); setSelected(null) }
 
+  async function handleExport() {
+    const all = await leadsApi.list({ search: search || undefined, status: status || undefined, limit: 1000 })
+    downloadCsv(all.data.map((l: Lead) => ({
+      nom: `${l.firstName} ${l.lastName}`,
+      email: l.email,
+      telephone: l.phone ?? '',
+      societe: l.company ?? '',
+      source: SOURCE_LABELS[l.source],
+      statut: l.status,
+      score: l.score,
+      cree_le: new Date(l.createdAt).toLocaleDateString('fr-FR'),
+    })), 'leads', [
+      { key: 'nom', label: 'Nom' }, { key: 'email', label: 'Email' },
+      { key: 'telephone', label: 'Téléphone' }, { key: 'societe', label: 'Société' },
+      { key: 'source', label: 'Source' }, { key: 'statut', label: 'Statut' },
+      { key: 'score', label: 'Score' }, { key: 'cree_le', label: 'Créé le' },
+    ])
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Leads</h1>
-        <button onClick={() => setModal('create')} className="btn-primary">
-          <Plus size={16} /> Nouveau lead
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} className="btn-secondary"><Download size={15} /> Export CSV</button>
+          <button onClick={() => setModal('create')} className="btn-primary"><Plus size={16} /> Nouveau lead</button>
+        </div>
       </div>
 
       {/* Filters */}
