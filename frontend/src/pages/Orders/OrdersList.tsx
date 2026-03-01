@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ordersApi, accountsApi } from '../../api'
+import { ordersApi, accountsApi, contractsApi } from '../../api'
 import { Order } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
@@ -19,19 +19,28 @@ function OrderForm({ order, onClose }: { order?: Order; onClose: () => void }) {
     status: order?.status ?? 'PENDING',
     orderDate: order?.orderDate ? order.orderDate.split('T')[0] : new Date().toISOString().split('T')[0],
     accountId: order?.accountId ?? '',
+    contractId: order?.contractId ?? '',
     notes: order?.notes ?? '',
   })
   const [error, setError] = useState('')
+
+  const { data: contracts } = useQuery({
+    queryKey: ['contracts-by-account', form.accountId],
+    queryFn: () => contractsApi.list({ accountId: form.accountId, limit: 100 }),
+    enabled: !!form.accountId,
+  })
+
   const mutation = useMutation({
     mutationFn: (data: object) => order ? ordersApi.update(order.id, data) : ordersApi.create(data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['orders'] }); onClose() },
     onError: (e: { response?: { data?: { error?: string } } }) => setError(e.response?.data?.error ?? 'Erreur'),
   })
+
   const f = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm((p) => ({ ...p, [k]: e.target.value }))
+    setForm((p) => ({ ...p, [k]: e.target.value, ...(k === 'accountId' ? { contractId: '' } : {}) }))
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(form) }} className="space-y-4">
+    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate({ ...form, contractId: form.contractId || undefined }) }} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div><label className="label">Montant (€) *</label><input type="number" className="input" value={form.totalAmount} onChange={f('totalAmount')} required /></div>
         <div><label className="label">Date commande</label><input type="date" className="input" value={form.orderDate} onChange={f('orderDate')} /></div>
@@ -50,6 +59,16 @@ function OrderForm({ order, onClose }: { order?: Order; onClose: () => void }) {
             {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
+      </div>
+      <div>
+        <label className="label">Contrat associé</label>
+        <select className="input" value={form.contractId} onChange={f('contractId')} disabled={!form.accountId}>
+          <option value="">— Aucun —</option>
+          {contracts?.data.map((c) => (
+            <option key={c.id} value={c.id}>{c.number} · {fmt(Number(c.amount))}</option>
+          ))}
+        </select>
+        {!form.accountId && <p className="text-xs text-gray-400 mt-1">Sélectionner un compte d'abord</p>}
       </div>
       <div><label className="label">Notes</label><textarea className="input" rows={2} value={form.notes} onChange={f('notes')} /></div>
       {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}

@@ -5,7 +5,7 @@ import { Opportunity } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search, LayoutGrid, List } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -144,12 +144,64 @@ function KanbanView() {
   )
 }
 
+function ContractFromOppForm({ opp, onClose }: { opp: Opportunity; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [form, setForm] = useState({ startDate: '', endDate: '', notes: '' })
+  const [error, setError] = useState('')
+
+  const mutation = useMutation({
+    mutationFn: (data: object) => opportunitiesApi.createContract(opp.id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contracts'] })
+      onClose()
+    },
+    onError: (e: { response?: { data?: { error?: string; contract?: { number: string } } } }) => {
+      const err = e.response?.data
+      if (err?.contract) setError(`Contrat déjà créé : ${err.contract.number}`)
+      else setError(err?.error ?? 'Erreur')
+    },
+  })
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(form) }} className="space-y-4">
+      <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-800">
+        <p className="font-medium">{opp.name}</p>
+        <p className="text-blue-600">{fmt(Number(opp.amount))} · {opp.account?.name}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Date début</label>
+          <input type="date" className="input" value={form.startDate}
+            onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))} />
+        </div>
+        <div>
+          <label className="label">Date fin</label>
+          <input type="date" className="input" value={form.endDate}
+            onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))} />
+        </div>
+      </div>
+      <div>
+        <label className="label">Notes</label>
+        <textarea className="input" rows={2} value={form.notes}
+          onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
+      </div>
+      {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}
+      <div className="flex gap-2 justify-end pt-2">
+        <button type="button" onClick={onClose} className="btn-secondary">Annuler</button>
+        <button type="submit" disabled={mutation.isPending} className="btn-primary">
+          {mutation.isPending ? 'Création...' : 'Créer le contrat'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 export default function OpportunitiesPage() {
   const [view, setView] = useState<'list' | 'kanban'>('kanban')
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [stage, setStage] = useState('')
-  const [modal, setModal] = useState<null | 'create' | 'edit'>(null)
+  const [modal, setModal] = useState<null | 'create' | 'edit' | 'contract'>(null)
   const [selected, setSelected] = useState<Opportunity | null>(null)
 
   const { data, isLoading } = useQuery({
@@ -163,6 +215,8 @@ export default function OpportunitiesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['opportunities'] }),
   })
   const close = () => { setModal(null); setSelected(null) }
+
+  function openContract(opp: Opportunity) { setSelected(opp); setModal('contract') }
 
   return (
     <div className="space-y-4">
@@ -225,8 +279,13 @@ export default function OpportunitiesPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-500">{format(new Date(opp.closeDate), 'dd MMM yyyy', { locale: fr })}</td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         <button onClick={() => { setSelected(opp); setModal('edit') }} className="text-xs text-blue-600 hover:underline">Modifier</button>
+                        {opp.stage === 'WON' && (
+                          <button onClick={() => openContract(opp)} className="text-xs text-green-600 hover:underline ml-2 flex items-center gap-0.5">
+                            <FileText size={11} /> Contrat
+                          </button>
+                        )}
                         <button onClick={() => { if (confirm('Supprimer ?')) deleteMutation.mutate(opp.id) }} className="text-xs text-red-500 hover:underline ml-2">Suppr.</button>
                       </div>
                     </td>
@@ -242,6 +301,7 @@ export default function OpportunitiesPage() {
 
       {modal === 'create' && <Modal title="Nouvelle opportunité" onClose={close} size="lg"><OppForm onClose={close} /></Modal>}
       {modal === 'edit' && selected && <Modal title="Modifier opportunité" onClose={close} size="lg"><OppForm opp={selected} onClose={close} /></Modal>}
+      {modal === 'contract' && selected && <Modal title="Créer un contrat" onClose={close}><ContractFromOppForm opp={selected} onClose={close} /></Modal>}
     </div>
   )
 }

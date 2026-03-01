@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '../api'
-import { TrendingUp, DollarSign, Users, CheckSquare, AlertTriangle, Target } from 'lucide-react'
+import { TrendingUp, DollarSign, Users, CheckSquare, AlertTriangle, Target, FileWarning } from 'lucide-react'
+import { differenceInDays } from 'date-fns'
+import { Contract } from '../types'
 
 const STAGE_LABELS: Record<string, string> = {
   PROSPECTING: 'Prospection', QUALIFICATION: 'Qualification',
@@ -39,6 +41,7 @@ function KpiCard({ label, value, sub, icon: Icon, color = 'blue' }: {
 export default function Dashboard() {
   const { data: kpi, isLoading } = useQuery({ queryKey: ['kpi'], queryFn: dashboardApi.kpi })
   const { data: pipeline } = useQuery({ queryKey: ['pipeline'], queryFn: dashboardApi.pipeline })
+  const { data: expiringContracts = [] } = useQuery({ queryKey: ['expiring-contracts'], queryFn: dashboardApi.expiringContracts })
 
   if (isLoading) {
     return (
@@ -111,6 +114,35 @@ export default function Dashboard() {
           })}
         </div>
       </div>
+
+      {/* Contrats expirant */}
+      {(expiringContracts as Contract[]).length > 0 && (
+        <div className="card border-l-4 border-orange-400">
+          <h2 className="text-base font-semibold mb-4 flex items-center gap-2 text-orange-700">
+            <FileWarning size={18} />
+            Contrats expirant dans 30 jours ({(expiringContracts as Contract[]).length})
+          </h2>
+          <div className="space-y-2">
+            {(expiringContracts as Contract[]).map((c) => {
+              const days = differenceInDays(new Date(c.endDate!), new Date())
+              return (
+                <div key={c.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <div>
+                    <span className="font-mono text-sm font-medium text-gray-800">{c.number}</span>
+                    <span className="text-sm text-gray-500 ml-2">{c.account?.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-blue-700">{fmt(Number(c.amount))}</span>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${days <= 7 ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                      {days}j
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Kanban preview */}
       {pipeline && (

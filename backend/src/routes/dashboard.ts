@@ -140,4 +140,25 @@ router.get('/pipeline', async (req: AuthRequest, res: Response) => {
   return res.json(kanban)
 })
 
+// GET /api/dashboard/expiring-contracts — contrats expirant dans 30j
+router.get('/expiring-contracts', async (req: AuthRequest, res: Response) => {
+  const ownerFilter = req.user!.role === 'SALES' ? { ownerId: req.user!.userId } : {}
+  const now = new Date()
+  const in30days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+  const contracts = await prisma.contract.findMany({
+    where: {
+      ...ownerFilter,
+      status: { in: ['ACTIVE', 'SIGNED'] },
+      endDate: { gte: now, lte: in30days },
+    },
+    include: {
+      account: { select: { id: true, name: true } },
+      owner: { select: { id: true, firstName: true, lastName: true } },
+    },
+    orderBy: { endDate: 'asc' },
+  })
+  return res.json(contracts)
+})
+
 export default router

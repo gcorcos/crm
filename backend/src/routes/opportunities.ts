@@ -93,6 +93,37 @@ router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthR
   return res.json(opp)
 })
 
+// POST /opportunities/:id/contract — crée un contrat depuis une opp gagnée
+router.post('/:id/contract', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthRequest, res: Response) => {
+  const opp = await prisma.opportunity.findUnique({ where: { id: req.params.id } })
+  if (!opp) return res.status(404).json({ error: 'Opportunité non trouvée' })
+  if (opp.stage !== 'WON') return res.status(400).json({ error: "L'opportunité doit être gagnée" })
+
+  const existing = await prisma.contract.findFirst({ where: { opportunityId: opp.id } })
+  if (existing) return res.status(409).json({ error: 'Un contrat existe déjà pour cette opportunité', contract: existing })
+
+  const year = new Date().getFullYear()
+  const count = await prisma.contract.count({ where: { number: { startsWith: `CTR-${year}-` } } })
+  const number = `CTR-${year}-${String(count + 1).padStart(4, '0')}`
+
+  const { startDate, endDate, notes } = req.body
+  const contract = await prisma.contract.create({
+    data: {
+      number,
+      amount: opp.amount,
+      status: 'DRAFT',
+      accountId: opp.accountId,
+      opportunityId: opp.id,
+      ownerId: req.user!.userId,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      notes,
+    },
+    include: { account: { select: { id: true, name: true } } },
+  })
+  return res.status(201).json(contract)
+})
+
 router.delete('/:id', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
   await prisma.opportunity.delete({ where: { id: req.params.id } })
   return res.status(204).send()

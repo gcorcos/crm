@@ -55,6 +55,7 @@ export const opportunitiesApi = {
   create: (data: object) => api.post<Opportunity>('/opportunities', data).then((r) => r.data),
   update: (id: string, data: object) => api.patch<Opportunity>(`/opportunities/${id}`, data).then((r) => r.data),
   remove: (id: string) => api.delete(`/opportunities/${id}`),
+  createContract: (id: string, data: object) => api.post<Contract>(`/opportunities/${id}/contract`, data).then((r) => r.data),
 }
 
 // Activities
@@ -91,4 +92,5 @@ export const ordersApi = {
 export const dashboardApi = {
   kpi: () => api.get<KpiData>('/dashboard/kpi').then((r) => r.data),
   pipeline: () => api.get('/dashboard/pipeline').then((r) => r.data),
+  expiringContracts: () => api.get<Contract[]>('/dashboard/expiring-contracts').then((r) => r.data),
 }

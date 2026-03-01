@@ -5,9 +5,20 @@ import { Contract } from '../../types'
 import StatusBadge from '../../components/ui/StatusBadge'
 import Pagination from '../../components/ui/Pagination'
 import Modal from '../../components/ui/Modal'
-import { Plus, Search } from 'lucide-react'
-import { format } from 'date-fns'
+import { Plus, Search, AlertTriangle } from 'lucide-react'
+import { format, differenceInDays } from 'date-fns'
 import { fr } from 'date-fns/locale'
+
+function daysUntilExpiry(endDate: string) {
+  return differenceInDays(new Date(endDate), new Date())
+}
+
+function isExpiringSoon(contract: Contract) {
+  if (!contract.endDate) return false
+  if (!['ACTIVE', 'SIGNED'].includes(contract.status)) return false
+  const days = daysUntilExpiry(contract.endDate)
+  return days >= 0 && days <= 30
+}
 
 const STATUSES = ['DRAFT', 'REVIEW', 'SIGNED', 'ACTIVE', 'EXPIRED', 'TERMINATED']
 
@@ -115,9 +126,20 @@ export default function ContractsList() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading && <tr><td colSpan={8} className="text-center py-8 text-gray-400">Chargement...</td></tr>}
-            {data?.data.map((c) => (
-              <tr key={c.id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-mono text-xs text-gray-600">{c.number}</td>
+            {data?.data.map((c) => {
+              const expiring = isExpiringSoon(c)
+              const daysLeft = c.endDate ? daysUntilExpiry(c.endDate) : null
+              return (
+              <tr key={c.id} className={`hover:bg-gray-50 ${expiring ? 'bg-orange-50 border-l-4 border-orange-400' : ''}`}>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1.5">
+                    {expiring && <AlertTriangle size={13} className="text-orange-500 shrink-0" />}
+                    <span className="font-mono text-xs text-gray-600">{c.number}</span>
+                  </div>
+                  {expiring && daysLeft !== null && (
+                    <span className="text-xs text-orange-600 font-medium">Expire dans {daysLeft}j</span>
+                  )}
+                </td>
                 <td className="px-4 py-3 font-medium">{c.account?.name}</td>
                 <td className="px-4 py-3 font-semibold text-blue-700">{fmt(Number(c.amount))}</td>
                 <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
@@ -131,7 +153,8 @@ export default function ContractsList() {
                   </div>
                 </td>
               </tr>
-            ))}
+            )})}
+
             {!isLoading && !data?.data.length && <tr><td colSpan={8} className="text-center py-8 text-gray-400">Aucun contrat</td></tr>}
           </tbody>
         </table>
