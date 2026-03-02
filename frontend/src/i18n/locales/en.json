@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "leads": "Leads",
+    "accounts": "Accounts",
+    "contacts": "Contacts",
+    "opportunities": "Opportunities",
+    "activities": "Activities",
+    "contracts": "Contracts",
+    "orders": "Orders",
+    "reports": "Reports",
+    "users": "Users",
+    "auditLog": "Audit Log",
+    "admin": "Admin"
+  },
+  "common": {
+    "save": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "export": "Export CSV",
+    "search": "Search...",
+    "globalSearch": "Global search...",
+    "loading": "Loading...",
+    "noResults": "No results",
+    "actions": "Actions",
+    "logout": "Logout"
+  },
+  "status": {
+    "NEW": "New",
+    "CONTACTED": "Contacted",
+    "QUALIFIED": "Qualified",
+    "CONVERTED": "Converted",
+    "LOST": "Lost",
+    "PROSPECTING": "Prospecting",
+    "QUALIFICATION": "Qualification",
+    "PROPOSAL": "Proposal",
+    "NEGOTIATION": "Negotiation",
+    "WON": "Won",
+    "DRAFT": "Draft",
+    "REVIEW": "In Review",
+    "SIGNED": "Signed",
+    "ACTIVE": "Active",
+    "EXPIRED": "Expired",
+    "TERMINATED": "Terminated",
+    "PENDING": "Pending",
+    "CONFIRMED": "Confirmed",
+    "IN_PROGRESS": "In Progress",
+    "DELIVERED": "Delivered",
+    "CANCELLED": "Cancelled"
+  }
+}

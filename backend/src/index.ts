@@ -2,6 +2,8 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
+import swaggerUi from 'swagger-ui-express'
+import { swaggerSpec } from './swagger'
 
 import authRoutes from './routes/auth'
 import userRoutes from './routes/users'
@@ -15,6 +17,8 @@ import orderRoutes from './routes/orders'
 import dashboardRoutes from './routes/dashboard'
 import reportRoutes from './routes/reports'
 import searchRoutes from './routes/search'
+import auditRoutes from './routes/audit'
+import organizationRoutes from './routes/organizations'
 import { registerCronJobs } from './jobs/notifications'
 
 const app = express()
@@ -36,6 +40,11 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/reports', reportRoutes)
 app.use('/api/search', searchRoutes)
+app.use('/api/audit-log', auditRoutes)
+app.use('/api/organizations', organizationRoutes)
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customSiteTitle: 'CRM API Docs' }))
+app.get('/api/docs.json', (_req, res) => res.json(swaggerSpec))
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
 

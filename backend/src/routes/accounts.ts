@@ -1,6 +1,7 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth'
+import { logAudit } from '../lib/audit'
 
 const router = Router()
 router.use(authenticate)
@@ -57,15 +58,18 @@ router.post('/', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthReque
   const account = await prisma.account.create({
     data: { name, industry, size, website, address, city, country, notes, ownerId: req.user!.userId },
   })
+  logAudit({ entity: 'Account', entityId: account.id, action: 'CREATE', after: account, userId: req.user!.userId })
   return res.status(201).json(account)
 })
 
 router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthRequest, res: Response) => {
   const { name, industry, size, website, address, city, country, notes, ownerId } = req.body
+  const before = await prisma.account.findUnique({ where: { id: req.params.id } })
   const account = await prisma.account.update({
     where: { id: req.params.id },
     data: { name, industry, size, website, address, city, country, notes, ownerId },
   })
+  logAudit({ entity: 'Account', entityId: account.id, action: 'UPDATE', before, after: account, userId: req.user!.userId })
   return res.json(account)
 })
 
@@ -77,7 +81,9 @@ router.delete('/:id', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, 
   if (contacts > 0 || opportunities > 0) {
     return res.status(400).json({ error: 'Impossible : contacts ou opportunités actives rattachées' })
   }
+  const before = await prisma.account.findUnique({ where: { id: req.params.id } })
   await prisma.account.delete({ where: { id: req.params.id } })
+  logAudit({ entity: 'Account', entityId: req.params.id, action: 'DELETE', before, userId: req.user!.userId })
   return res.status(204).send()
 })
 

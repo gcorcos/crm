@@ -80,16 +80,30 @@ enum RelatedType {
   ACCOUNT
 }
 
+model Organization {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@map("organizations")
+}
+
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  password     String
-  firstName    String
-  lastName     String
-  role         Role     @default(SALES)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String        @id @default(cuid())
+  email          String        @unique
+  password       String
+  firstName      String
+  lastName       String
+  role           Role          @default(SALES)
+  isActive       Boolean       @default(true)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   leads         Lead[]
   accounts      Account[]
@@ -100,6 +114,7 @@ model User {
   orders        Order[]
   reports       Report[]
   dashboards    Dashboard[]
+  auditLogs     AuditLog[]
 
   @@map("users")
 }
@@ -292,4 +307,21 @@ model Dashboard {
   updatedAt DateTime @updatedAt
 
   @@map("dashboards")
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  entity   String
+  entityId String
+  action   String
+  before   Json?
+  after    Json?
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

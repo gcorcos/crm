@@ -1,29 +1,32 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Building2, Contact, Target,
-  CheckSquare, FileText, ShoppingCart, LogOut, TrendingUp, BarChart2,
+  CheckSquare, FileText, ShoppingCart, LogOut, TrendingUp, BarChart2, ShieldCheck,
 } from 'lucide-react'
 import { useAuthStore } from '../../store/auth'
+import { useTranslation } from 'react-i18next'
 import clsx from 'clsx'
-
-const nav = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/leads', label: 'Leads', icon: TrendingUp },
-  { to: '/accounts', label: 'Comptes', icon: Building2 },
-  { to: '/contacts', label: 'Contacts', icon: Contact },
-  { to: '/opportunities', label: 'Opportunités', icon: Target },
-  { to: '/activities', label: 'Activités', icon: CheckSquare },
-  { to: '/contracts', label: 'Contrats', icon: FileText },
-  { to: '/orders', label: 'Commandes', icon: ShoppingCart },
-  { to: '/reports', label: 'Rapports', icon: BarChart2 },
-]
-
-const adminNav = [
-  { to: '/users', label: 'Utilisateurs', icon: Users },
-]
 
 export default function Sidebar() {
   const { user, logout } = useAuthStore()
+  const { t } = useTranslation()
+
+  const nav = [
+    { to: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { to: '/leads', label: t('nav.leads'), icon: TrendingUp },
+    { to: '/accounts', label: t('nav.accounts'), icon: Building2 },
+    { to: '/contacts', label: t('nav.contacts'), icon: Contact },
+    { to: '/opportunities', label: t('nav.opportunities'), icon: Target },
+    { to: '/activities', label: t('nav.activities'), icon: CheckSquare },
+    { to: '/contracts', label: t('nav.contracts'), icon: FileText },
+    { to: '/orders', label: t('nav.orders'), icon: ShoppingCart },
+    { to: '/reports', label: t('nav.reports'), icon: BarChart2 },
+  ]
+
+  const adminNav = [
+    { to: '/users', label: t('nav.users'), icon: Users },
+    { to: '/audit-log', label: t('nav.auditLog'), icon: ShieldCheck },
+  ]
 
   return (
     <div className="flex flex-col h-full bg-gray-900 text-white w-64 fixed inset-y-0 left-0 z-50">
@@ -54,7 +57,7 @@ export default function Sidebar() {
         ))}
         {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
           <>
-            <div className="pt-3 pb-1 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</div>
+            <div className="pt-3 pb-1 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('nav.admin')}</div>
             {adminNav.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
@@ -92,7 +95,7 @@ export default function Sidebar() {
           className="flex items-center gap-2 text-gray-400 hover:text-white text-sm w-full px-2 py-1.5 rounded hover:bg-gray-800 transition-colors"
         >
           <LogOut size={16} />
-          Déconnexion
+          {t('common.logout')}
         </button>
       </div>
     </div>

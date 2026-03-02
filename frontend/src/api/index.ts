@@ -97,6 +97,28 @@ export const reportsApi = {
   revenue: (params: object) => api.get('/reports/revenue', { params }).then((r) => r.data),
 }
 
+// Organizations
+export const orgApi = {
+  list: () => api.get('/organizations').then((r) => r.data as { id: string; name: string; slug: string; _count: { users: number } }[]),
+  me: () => api.get('/organizations/me').then((r) => r.data as { id: string; name: string } | null),
+  create: (data: object) => api.post('/organizations', data).then((r) => r.data),
+  update: (id: string, data: object) => api.patch(`/organizations/${id}`, data).then((r) => r.data),
+  assign: (orgId: string, userId: string) => api.post(`/organizations/${orgId}/assign`, { userId }).then((r) => r.data),
+}
+
+// Audit Log
+export const auditApi = {
+  list: (params?: object) => api.get('/audit-log', { params }).then((r) => r.data as {
+    data: {
+      id: string; entity: string; entityId: string; action: string
+      before: unknown; after: unknown
+      user: { id: string; firstName: string; lastName: string } | null
+      createdAt: string
+    }[]
+    total: number; page: number; limit: number
+  }),
+}
+
 // Search
 export const searchApi = {
   search: (q: string) => api.get('/search', { params: { q } }).then((r) => r.data as {

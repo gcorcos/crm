@@ -14,6 +14,7 @@ import ContractsList from './pages/Contracts/ContractsList'
 import OrdersList from './pages/Orders/OrdersList'
 import UsersList from './pages/Users/UsersList'
 import ReportsPage from './pages/Reports/ReportsPage'
+import AuditLogPage from './pages/AuditLog/AuditLogPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { accessToken } = useAuthStore()
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="orders" element={<OrdersList />} />
           <Route path="users" element={<UsersList />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="audit-log" element={<AuditLogPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

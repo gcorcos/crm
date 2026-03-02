@@ -1,6 +1,7 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth'
+import { logAudit } from '../lib/audit'
 
 const STAGE_PROBABILITY: Record<string, number> = {
   PROSPECTING: 10,
@@ -72,6 +73,7 @@ router.post('/', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthReque
       ownerId: req.user!.userId,
     },
   })
+  logAudit({ entity: 'Opportunity', entityId: opp.id, action: 'CREATE', after: opp, userId: req.user!.userId })
   return res.status(201).json(opp)
 })
 
@@ -89,7 +91,9 @@ router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthR
     data.probability = probability
   }
 
+  const before = await prisma.opportunity.findUnique({ where: { id: req.params.id } })
   const opp = await prisma.opportunity.update({ where: { id: req.params.id }, data })
+  logAudit({ entity: 'Opportunity', entityId: opp.id, action: 'UPDATE', before, after: opp, userId: req.user!.userId })
   return res.json(opp)
 })
 
@@ -125,7 +129,9 @@ router.post('/:id/contract', requireRole('ADMIN', 'MANAGER', 'SALES'), async (re
 })
 
 router.delete('/:id', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
+  const before = await prisma.opportunity.findUnique({ where: { id: req.params.id } })
   await prisma.opportunity.delete({ where: { id: req.params.id } })
+  logAudit({ entity: 'Opportunity', entityId: req.params.id, action: 'DELETE', before, userId: req.user!.userId })
   return res.status(204).send()
 })
 

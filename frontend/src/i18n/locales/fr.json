@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "leads": "Leads",
+    "accounts": "Comptes",
+    "contacts": "Contacts",
+    "opportunities": "Opportunités",
+    "activities": "Activités",
+    "contracts": "Contrats",
+    "orders": "Commandes",
+    "reports": "Rapports",
+    "users": "Utilisateurs",
+    "auditLog": "Journal d'audit",
+    "admin": "Admin"
+  },
+  "common": {
+    "save": "Enregistrement...",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "export": "Export CSV",
+    "search": "Rechercher...",
+    "globalSearch": "Recherche globale...",
+    "loading": "Chargement...",
+    "noResults": "Aucun résultat",
+    "actions": "Actions",
+    "logout": "Déconnexion"
+  },
+  "status": {
+    "NEW": "Nouveau",
+    "CONTACTED": "Contacté",
+    "QUALIFIED": "Qualifié",
+    "CONVERTED": "Converti",
+    "LOST": "Perdu",
+    "PROSPECTING": "Prospection",
+    "QUALIFICATION": "Qualification",
+    "PROPOSAL": "Proposition",
+    "NEGOTIATION": "Négociation",
+    "WON": "Gagné",
+    "DRAFT": "Brouillon",
+    "REVIEW": "En révision",
+    "SIGNED": "Signé",
+    "ACTIVE": "Actif",
+    "EXPIRED": "Expiré",
+    "TERMINATED": "Résilié",
+    "PENDING": "En attente",
+    "CONFIRMED": "Confirmée",
+    "IN_PROGRESS": "En cours",
+    "DELIVERED": "Livrée",
+    "CANCELLED": "Annulée"
+  }
+}

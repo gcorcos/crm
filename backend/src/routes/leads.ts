@@ -1,6 +1,7 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth'
+import { logAudit } from '../lib/audit'
 
 const router = Router()
 router.use(authenticate)
@@ -67,16 +68,19 @@ router.post('/', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthReque
       ownerId: req.user!.userId,
     },
   })
+  logAudit({ entity: 'Lead', entityId: lead.id, action: 'CREATE', after: lead, userId: req.user!.userId })
   return res.status(201).json(lead)
 })
 
 // PATCH /api/leads/:id
 router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthRequest, res: Response) => {
   const { firstName, lastName, email, phone, company, source, status, score, notes, ownerId } = req.body
+  const before = await prisma.lead.findUnique({ where: { id: req.params.id } })
   const lead = await prisma.lead.update({
     where: { id: req.params.id },
     data: { firstName, lastName, email, phone, company, source, status, score, notes, ownerId },
   })
+  logAudit({ entity: 'Lead', entityId: lead.id, action: 'UPDATE', before, after: lead, userId: req.user!.userId })
   return res.json(lead)
 })
 
@@ -127,7 +131,9 @@ router.post('/:id/convert', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req
 
 // DELETE /api/leads/:id
 router.delete('/:id', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
+  const before = await prisma.lead.findUnique({ where: { id: req.params.id } })
   await prisma.lead.delete({ where: { id: req.params.id } })
+  logAudit({ entity: 'Lead', entityId: req.params.id, action: 'DELETE', before, userId: req.user!.userId })
   return res.status(204).send()
 })
 

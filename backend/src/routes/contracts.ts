@@ -1,6 +1,7 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { authenticate, requireRole, AuthRequest } from '../middleware/auth'
+import { logAudit } from '../lib/audit'
 
 const router = Router()
 router.use(authenticate)
@@ -63,6 +64,7 @@ router.post('/', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthReque
       ownerId: req.user!.userId,
     },
   })
+  logAudit({ entity: 'Contract', entityId: contract.id, action: 'CREATE', after: contract, userId: req.user!.userId })
   return res.status(201).json(contract)
 })
 
@@ -72,12 +74,16 @@ router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthR
   if (startDate) data.startDate = new Date(startDate)
   if (endDate) data.endDate = new Date(endDate)
   if (signedAt || status === 'SIGNED') data.signedAt = signedAt ? new Date(signedAt) : new Date()
+  const before = await prisma.contract.findUnique({ where: { id: req.params.id } })
   const contract = await prisma.contract.update({ where: { id: req.params.id }, data })
+  logAudit({ entity: 'Contract', entityId: contract.id, action: 'UPDATE', before, after: contract, userId: req.user!.userId })
   return res.json(contract)
 })
 
 router.delete('/:id', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: Response) => {
+  const before = await prisma.contract.findUnique({ where: { id: req.params.id } })
   await prisma.contract.delete({ where: { id: req.params.id } })
+  logAudit({ entity: 'Contract', entityId: req.params.id, action: 'DELETE', before, userId: req.user!.userId })
   return res.status(204).send()
 })
 
