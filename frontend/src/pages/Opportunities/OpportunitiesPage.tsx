@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { opportunitiesApi, accountsApi, dashboardApi } from '../../api'
 import { Opportunity } from '../../types'
@@ -121,7 +122,7 @@ function KanbanView() {
             <div className="space-y-2">
               {opps.map((opp) => (
                 <div key={opp.id} className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
-                  <p className="text-sm font-medium text-gray-800">{opp.name}</p>
+                  <Link to={`/opportunities/${opp.id}`} className="text-sm font-medium text-gray-800 hover:text-blue-600 block">{opp.name}</Link>
                   <p className="text-xs text-gray-400 mt-0.5">{opp.account?.name}</p>
                   <div className="flex justify-between items-center mt-2">
                     <span className="text-sm font-semibold text-blue-600">{fmt(Number(opp.amount))}</span>
@@ -279,7 +280,7 @@ export default function OpportunitiesPage() {
                 {data?.data.map((opp) => (
                   <tr key={opp.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">
-                      <button onClick={() => { setSelected(opp); setModal('edit') }} className="hover:text-blue-600">{opp.name}</button>
+                      <Link to={`/opportunities/${opp.id}`} className="hover:text-blue-600">{opp.name}</Link>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{opp.account?.name}</td>
                     <td className="px-4 py-3 font-semibold text-blue-700">{fmt(Number(opp.amount))}</td>

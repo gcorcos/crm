@@ -97,6 +97,16 @@ export const reportsApi = {
   revenue: (params: object) => api.get('/reports/revenue', { params }).then((r) => r.data),
 }
 
+// Search
+export const searchApi = {
+  search: (q: string) => api.get('/search', { params: { q } }).then((r) => r.data as {
+    leads: { id: string; firstName: string; lastName: string; email: string; company: string | null; status: string }[]
+    accounts: { id: string; name: string; industry: string | null }[]
+    contacts: { id: string; firstName: string; lastName: string; email: string }[]
+    opportunities: { id: string; name: string; stage: string; amount: unknown; account: { name: string } | null }[]
+  }),
+}
+
 // Dashboard
 export const dashboardApi = {
   kpi: () => api.get<KpiData>('/dashboard/kpi').then((r) => r.data),

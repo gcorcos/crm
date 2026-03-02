@@ -14,6 +14,8 @@ import contractRoutes from './routes/contracts'
 import orderRoutes from './routes/orders'
 import dashboardRoutes from './routes/dashboard'
 import reportRoutes from './routes/reports'
+import searchRoutes from './routes/search'
+import { registerCronJobs } from './jobs/notifications'
 
 const app = express()
 const PORT = process.env.PORT ?? 4000
@@ -33,6 +35,7 @@ app.use('/api/contracts', contractRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/reports', reportRoutes)
+app.use('/api/search', searchRoutes)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }))
 
@@ -43,6 +46,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 app.listen(PORT, () => {
   console.log(`🚀 CRM API démarrée sur http://localhost:${PORT}`)
+  registerCronJobs()
 })
 
 export default app

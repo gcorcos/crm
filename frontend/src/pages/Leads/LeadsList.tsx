@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { leadsApi } from '../../api'
 import { Lead } from '../../types'
@@ -191,9 +192,9 @@ export default function LeadsList() {
             {data?.data.map((lead) => (
               <tr key={lead.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium">
-                  <button onClick={() => openEdit(lead)} className="hover:text-blue-600 transition-colors">
+                  <Link to={`/leads/${lead.id}`} className="hover:text-blue-600 transition-colors">
                     {lead.firstName} {lead.lastName}
-                  </button>
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{lead.email}</td>
                 <td className="px-4 py-3 text-gray-600">{lead.company ?? '—'}</td>
