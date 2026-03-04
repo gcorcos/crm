@@ -83,7 +83,7 @@ export default function ContactDetail() {
 
   const { data: contact, isLoading } = useQuery({
     queryKey: ['contact', id],
-    queryFn: () => contactsApi.get(id!) as Promise<ContactFull>,
+    queryFn: () => contactsApi.get(id!) as unknown as Promise<ContactFull>,
     enabled: !!id,
   })
 

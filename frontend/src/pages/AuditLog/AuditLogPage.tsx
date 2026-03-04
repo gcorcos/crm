@@ -81,7 +81,7 @@ export default function AuditLogPage() {
                     {log.user ? `${log.user.firstName} ${log.user.lastName}` : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    {(log.before || log.after) && (
+                    {!!(log.before || log.after) && (
                       <button
                         onClick={() => setExpanded(expanded === log.id ? null : log.id)}
                         className="text-xs text-blue-600 hover:underline"
@@ -95,7 +95,7 @@ export default function AuditLogPage() {
                   <tr key={`${log.id}-detail`} className="bg-gray-50">
                     <td colSpan={5} className="px-4 py-3">
                       <div className="grid grid-cols-2 gap-4 text-xs">
-                        {log.before && (
+                        {!!log.before && (
                           <div>
                             <p className="font-semibold text-gray-500 mb-1">Avant</p>
                             <pre className="bg-white rounded p-2 border text-gray-600 overflow-auto max-h-40">
@@ -103,7 +103,7 @@ export default function AuditLogPage() {
                             </pre>
                           </div>
                         )}
-                        {log.after && (
+                        {!!log.after && (
                           <div>
                             <p className="font-semibold text-gray-500 mb-1">Après</p>
                             <pre className="bg-white rounded p-2 border text-gray-600 overflow-auto max-h-40">

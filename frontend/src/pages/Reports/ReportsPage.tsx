@@ -43,7 +43,7 @@ function RevenueReport() {
 
   // Collect all periods across all commercials
   const allPeriods: string[] = data
-    ? [...new Set(data.commercials.flatMap((c: { periods: Record<string, unknown> }) => Object.keys(c.periods)))].sort()
+    ? ([...new Set(data.commercials.flatMap((c: { periods: Record<string, unknown> }) => Object.keys(c.periods)))].sort() as string[])
     : []
 
   function handleExport() {

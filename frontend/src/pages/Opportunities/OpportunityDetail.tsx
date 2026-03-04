@@ -191,7 +191,7 @@ export default function OpportunityDetail() {
           </div>
 
           {/* Contracts */}
-          {(opp as Opportunity & { contracts?: { id: string; number: string; status: string; amount: number }[] }).contracts?.length > 0 && (
+          {((opp as Opportunity & { contracts?: { id: string; number: string; status: string; amount: number }[] }).contracts?.length ?? 0) > 0 && (
             <div className="card">
               <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <FileText size={15} /> Contrats associés

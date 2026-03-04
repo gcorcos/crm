@@ -85,7 +85,7 @@ export default function AccountDetail() {
 
   const { data: account, isLoading } = useQuery({
     queryKey: ['account', id],
-    queryFn: () => accountsApi.get(id!) as Promise<AccountFull>,
+    queryFn: () => accountsApi.get(id!) as unknown as Promise<AccountFull>,
     enabled: !!id,
   })
 

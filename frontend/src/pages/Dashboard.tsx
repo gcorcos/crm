@@ -125,7 +125,7 @@ export default function Dashboard() {
             <BarChart data={monthlyChartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
               <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tickFormatter={fmtK} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
-              <Tooltip formatter={(v: number) => fmt(v)} labelStyle={{ fontWeight: 600 }} />
+              <Tooltip formatter={(v) => fmt(Number(v ?? 0))} labelStyle={{ fontWeight: 600 }} />
               <Bar dataKey="ca" fill="#3b82f6" radius={[4, 4, 0, 0]} name="CA" />
             </BarChart>
           </ResponsiveContainer>
@@ -162,7 +162,7 @@ export default function Dashboard() {
             <BarChart data={pipelineChartData} layout="vertical" margin={{ top: 0, right: 60, bottom: 0, left: 80 }}>
               <XAxis type="number" tickFormatter={fmtK} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
-              <Tooltip formatter={(v: number) => fmt(v)} />
+              <Tooltip formatter={(v) => fmt(Number(v ?? 0))} />
               <Bar dataKey="amount" radius={[0, 4, 4, 0]} name="Montant">
                 {pipelineChartData.map((entry, i) => (
                   <Cell key={i} fill={STAGE_COLORS[['PROSPECTING', 'QUALIFICATION', 'PROPOSAL', 'NEGOTIATION'][i]] ?? '#3b82f6'} />
