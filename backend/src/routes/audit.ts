@@ -15,13 +15,13 @@ router.get('/', requireRole('ADMIN', 'MANAGER'), async (req: AuthRequest, res: R
 
   const [data, total] = await Promise.all([
     prisma.auditLog.findMany({
-      where,
+      where: where as any,
       include: { user: { select: { id: true, firstName: true, lastName: true } } },
       orderBy: { createdAt: 'desc' },
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit),
     }),
-    prisma.auditLog.count({ where }),
+    prisma.auditLog.count({ where: where as any }),
   ])
 
   return res.json({ data, total, page: Number(page), limit: Number(limit) })

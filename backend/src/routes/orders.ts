@@ -21,7 +21,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   if (search) where.number = { contains: search as string, mode: 'insensitive' }
   const [data, total] = await Promise.all([
     prisma.order.findMany({
-      where,
+      where: where as any,
       include: {
         account: { select: { id: true, name: true } },
         contract: { select: { id: true, number: true } },
@@ -31,7 +31,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       skip,
       take: parseInt(limit as string),
     }),
-    prisma.order.count({ where }),
+    prisma.order.count({ where: where as any }),
   ])
   return res.json({ data, total, page: parseInt(page as string), limit: parseInt(limit as string) })
 })

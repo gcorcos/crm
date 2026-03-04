@@ -20,7 +20,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   }
   const [data, total] = await Promise.all([
     prisma.account.findMany({
-      where,
+      where: where as any,
       include: {
         owner: { select: { id: true, firstName: true, lastName: true } },
         _count: { select: { contacts: true, opportunities: true } },
@@ -29,7 +29,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       skip,
       take: parseInt(limit as string),
     }),
-    prisma.account.count({ where }),
+    prisma.account.count({ where: where as any }),
   ])
   return res.json({ data, total, page: parseInt(page as string), limit: parseInt(limit as string) })
 })

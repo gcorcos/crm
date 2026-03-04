@@ -20,13 +20,13 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   }
   const [data, total] = await Promise.all([
     prisma.activity.findMany({
-      where,
+      where: where as any,
       include: { owner: { select: { id: true, firstName: true, lastName: true } } },
       orderBy: { dueDate: 'asc' },
       skip,
       take: parseInt(limit as string),
     }),
-    prisma.activity.count({ where }),
+    prisma.activity.count({ where: where as any }),
   ])
   return res.json({ data, total, page: parseInt(page as string), limit: parseInt(limit as string) })
 })
@@ -62,7 +62,7 @@ router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthR
   const data: Record<string, unknown> = { type, subject, description, status, ownerId }
   if (dueDate) data.dueDate = new Date(dueDate)
   if (status === 'DONE') data.doneAt = new Date()
-  const activity = await prisma.activity.update({ where: { id: req.params.id }, data })
+  const activity = await prisma.activity.update({ where: { id: req.params.id }, data: data as any })
   return res.json(activity)
 })
 

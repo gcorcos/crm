@@ -27,7 +27,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   }
   const [data, total] = await Promise.all([
     prisma.opportunity.findMany({
-      where,
+      where: where as any,
       include: {
         account: { select: { id: true, name: true } },
         contact: { select: { id: true, firstName: true, lastName: true } },
@@ -37,7 +37,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       skip,
       take: parseInt(limit as string),
     }),
-    prisma.opportunity.count({ where }),
+    prisma.opportunity.count({ where: where as any }),
   ])
   return res.json({ data, total, page: parseInt(page as string), limit: parseInt(limit as string) })
 })
@@ -92,7 +92,7 @@ router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthR
   }
 
   const before = await prisma.opportunity.findUnique({ where: { id: req.params.id } })
-  const opp = await prisma.opportunity.update({ where: { id: req.params.id }, data })
+  const opp = await prisma.opportunity.update({ where: { id: req.params.id }, data: data as any })
   logAudit({ entity: 'Opportunity', entityId: opp.id, action: 'UPDATE', before, after: opp, userId: req.user!.userId })
   return res.json(opp)
 })

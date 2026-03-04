@@ -22,7 +22,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   if (search) where.number = { contains: search as string, mode: 'insensitive' }
   const [data, total] = await Promise.all([
     prisma.contract.findMany({
-      where,
+      where: where as any,
       include: {
         account: { select: { id: true, name: true } },
         owner: { select: { id: true, firstName: true, lastName: true } },
@@ -31,7 +31,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       skip,
       take: parseInt(limit as string),
     }),
-    prisma.contract.count({ where }),
+    prisma.contract.count({ where: where as any }),
   ])
   return res.json({ data, total, page: parseInt(page as string), limit: parseInt(limit as string) })
 })
@@ -75,7 +75,7 @@ router.patch('/:id', requireRole('ADMIN', 'MANAGER', 'SALES'), async (req: AuthR
   if (endDate) data.endDate = new Date(endDate)
   if (signedAt || status === 'SIGNED') data.signedAt = signedAt ? new Date(signedAt) : new Date()
   const before = await prisma.contract.findUnique({ where: { id: req.params.id } })
-  const contract = await prisma.contract.update({ where: { id: req.params.id }, data })
+  const contract = await prisma.contract.update({ where: { id: req.params.id }, data: data as any })
   logAudit({ entity: 'Contract', entityId: contract.id, action: 'UPDATE', before, after: contract, userId: req.user!.userId })
   return res.json(contract)
 })
