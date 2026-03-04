@@ -14,8 +14,8 @@ export async function logAudit(params: {
         entity: params.entity,
         entityId: params.entityId,
         action: params.action,
-        before: params.before ?? undefined,
-        after: params.after ?? undefined,
+        before: (params.before ?? undefined) as any,
+        after: (params.after ?? undefined) as any,
         userId: params.userId,
       },
     })
