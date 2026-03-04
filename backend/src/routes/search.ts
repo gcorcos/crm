@@ -1,10 +1,11 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma'
-import { requireAuth } from '../middleware/auth'
+import { authenticate } from '../middleware/auth'
 
 const router = Router()
+router.use(authenticate)
 
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', async (req, res) => {
   const q = String(req.query.q ?? '').trim()
   if (!q || q.length < 2) {
     return res.json({ leads: [], accounts: [], contacts: [], opportunities: [] })

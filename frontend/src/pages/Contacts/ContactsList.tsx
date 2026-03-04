@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { contactsApi, accountsApi } from '../../api'
 import { Contact } from '../../types'
@@ -123,9 +124,9 @@ export default function ContactsList() {
             {data?.data.map((c) => (
               <tr key={c.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium">
-                  <button onClick={() => { setSelected(c); setModal('edit') }} className="hover:text-blue-600">
+                  <Link to={`/contacts/${c.id}`} className="hover:text-blue-600">
                     {c.firstName} {c.lastName}
-                  </button>
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{c.email}</td>
                 <td className="px-4 py-3 text-gray-600">{c.phone ?? '—'}</td>

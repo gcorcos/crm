@@ -81,15 +81,15 @@ export default function Sidebar() {
 
       {/* User */}
       <div className="px-4 py-4 border-t border-gray-700">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">
+        <NavLink to="/profile" className="flex items-center gap-3 mb-3 hover:bg-gray-800 rounded-lg px-2 py-1.5 -mx-2 transition-colors">
+          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold shrink-0">
             {user?.firstName?.[0]}{user?.lastName?.[0]}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{user?.firstName} {user?.lastName}</p>
             <p className="text-xs text-gray-400 truncate">{user?.role}</p>
           </div>
-        </div>
+        </NavLink>
         <button
           onClick={logout}
           className="flex items-center gap-2 text-gray-400 hover:text-white text-sm w-full px-2 py-1.5 rounded hover:bg-gray-800 transition-colors"

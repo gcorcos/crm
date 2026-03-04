@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { accountsApi } from '../../api'
 import { Account } from '../../types'
@@ -132,9 +133,9 @@ export default function AccountsList() {
                     <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
                       <Building2 size={14} className="text-blue-600" />
                     </div>
-                    <button onClick={() => { setSelected(acc); setModal('edit') }} className="font-medium hover:text-blue-600">
+                    <Link to={`/accounts/${acc.id}`} className="font-medium hover:text-blue-600">
                       {acc.name}
-                    </button>
+                    </Link>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-gray-600">{acc.industry ?? '—'}</td>

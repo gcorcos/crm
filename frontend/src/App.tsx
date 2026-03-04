@@ -6,7 +6,10 @@ import Dashboard from './pages/Dashboard'
 import LeadsList from './pages/Leads/LeadsList'
 import LeadDetail from './pages/Leads/LeadDetail'
 import AccountsList from './pages/Accounts/AccountsList'
+import AccountDetail from './pages/Accounts/AccountDetail'
 import ContactsList from './pages/Contacts/ContactsList'
+import ContactDetail from './pages/Contacts/ContactDetail'
+import ProfilePage from './pages/Profile/ProfilePage'
 import OpportunitiesPage from './pages/Opportunities/OpportunitiesPage'
 import OpportunityDetail from './pages/Opportunities/OpportunityDetail'
 import ActivitiesList from './pages/Activities/ActivitiesList'
@@ -39,7 +42,9 @@ export default function App() {
           <Route path="leads" element={<LeadsList />} />
           <Route path="leads/:id" element={<LeadDetail />} />
           <Route path="accounts" element={<AccountsList />} />
+          <Route path="accounts/:id" element={<AccountDetail />} />
           <Route path="contacts" element={<ContactsList />} />
+          <Route path="contacts/:id" element={<ContactDetail />} />
           <Route path="opportunities" element={<OpportunitiesPage />} />
           <Route path="opportunities/:id" element={<OpportunityDetail />} />
           <Route path="activities" element={<ActivitiesList />} />
@@ -48,6 +53,7 @@ export default function App() {
           <Route path="users" element={<UsersList />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

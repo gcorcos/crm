@@ -8,6 +8,12 @@ export const authApi = {
   me: () => api.get('/auth/me').then((r) => r.data),
 }
 
+// Profile (current user)
+export const profileApi = {
+  updateMe: (data: object) => api.patch('/users/me', data).then((r) => r.data),
+  changePassword: (data: object) => api.patch('/users/me/password', data).then((r) => r.data),
+}
+
 // Users
 export const usersApi = {
   list: () => api.get('/users').then((r) => r.data),
@@ -134,4 +140,6 @@ export const dashboardApi = {
   kpi: () => api.get<KpiData>('/dashboard/kpi').then((r) => r.data),
   pipeline: () => api.get('/dashboard/pipeline').then((r) => r.data),
   expiringContracts: () => api.get<Contract[]>('/dashboard/expiring-contracts').then((r) => r.data),
+  leadSources: () => api.get<{ source: string; count: number }[]>('/dashboard/lead-sources').then((r) => r.data),
+  monthlyRevenue: (year: number) => api.get('/reports/revenue', { params: { period: 'month', year } }).then((r) => r.data),
 }

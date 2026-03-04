@@ -140,6 +140,18 @@ router.get('/pipeline', async (req: AuthRequest, res: Response) => {
   return res.json(kanban)
 })
 
+// GET /api/dashboard/lead-sources — répartition des leads par source
+router.get('/lead-sources', async (req: AuthRequest, res: Response) => {
+  const ownerFilter = req.user!.role === 'SALES' ? { ownerId: req.user!.userId } : {}
+  const groups = await prisma.lead.groupBy({
+    by: ['source'],
+    where: ownerFilter,
+    _count: { id: true },
+    orderBy: { _count: { id: 'desc' } },
+  })
+  return res.json(groups.map((g) => ({ source: g.source, count: g._count.id })))
+})
+
 // GET /api/dashboard/expiring-contracts — contrats expirant dans 30j
 router.get('/expiring-contracts', async (req: AuthRequest, res: Response) => {
   const ownerFilter = req.user!.role === 'SALES' ? { ownerId: req.user!.userId } : {}

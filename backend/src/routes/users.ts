@@ -6,6 +6,38 @@ import { authenticate, requireRole, AuthRequest } from '../middleware/auth'
 const router = Router()
 router.use(authenticate)
 
+// PATCH /api/users/me — modifier son propre profil
+router.patch('/me', async (req: AuthRequest, res: Response) => {
+  const { firstName, lastName, email } = req.body
+  if (email) {
+    const existing = await prisma.user.findFirst({ where: { email, NOT: { id: req.user!.userId } } })
+    if (existing) return res.status(409).json({ error: 'Email déjà utilisé' })
+  }
+  const user = await prisma.user.update({
+    where: { id: req.user!.userId },
+    data: { firstName, lastName, email },
+    select: { id: true, email: true, firstName: true, lastName: true, role: true, isActive: true },
+  })
+  return res.json(user)
+})
+
+// PATCH /api/users/me/password — changer son mot de passe
+router.patch('/me/password', async (req: AuthRequest, res: Response) => {
+  const { currentPassword, newPassword } = req.body
+  if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Champs requis manquants' })
+  if (newPassword.length < 8) return res.status(400).json({ error: 'Nouveau mot de passe trop court (8 car. min)' })
+
+  const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
+  if (!user) return res.status(404).json({ error: 'Utilisateur introuvable' })
+
+  const valid = await bcrypt.compare(currentPassword, user.password)
+  if (!valid) return res.status(400).json({ error: 'Mot de passe actuel incorrect' })
+
+  const hashed = await bcrypt.hash(newPassword, 10)
+  await prisma.user.update({ where: { id: req.user!.userId }, data: { password: hashed } })
+  return res.json({ message: 'Mot de passe modifié' })
+})
+
 // GET /api/users
 router.get('/', async (req: AuthRequest, res: Response) => {
   const users = await prisma.user.findMany({
