@@ -152,6 +152,31 @@ router.get('/lead-sources', async (req: AuthRequest, res: Response) => {
   return res.json(groups.map((g) => ({ source: g.source, count: g._count.id })))
 })
 
+// GET /api/dashboard/monthly-revenue?year=YYYY — CA mensuel agrégé
+router.get('/monthly-revenue', async (req: AuthRequest, res: Response) => {
+  const year = parseInt((req.query.year as string) ?? String(new Date().getFullYear()))
+  const ownerFilter = req.user!.role === 'SALES' ? { ownerId: req.user!.userId } : {}
+
+  const wonOpps = await prisma.opportunity.findMany({
+    where: {
+      ...ownerFilter,
+      stage: 'WON',
+      updatedAt: { gte: new Date(`${year}-01-01`), lt: new Date(`${year + 1}-01-01`) },
+    },
+    select: { amount: true, updatedAt: true },
+  })
+
+  const byMonth: Record<number, number> = {}
+  for (const opp of wonOpps) {
+    const month = new Date(opp.updatedAt).getMonth() + 1
+    byMonth[month] = (byMonth[month] ?? 0) + Number(opp.amount)
+  }
+
+  return res.json(
+    Array.from({ length: 12 }, (_, i) => ({ year, period: i + 1, total: byMonth[i + 1] ?? 0 }))
+  )
+})
+
 // GET /api/dashboard/expiring-contracts — contrats expirant dans 30j
 router.get('/expiring-contracts', async (req: AuthRequest, res: Response) => {
   const ownerFilter = req.user!.role === 'SALES' ? { ownerId: req.user!.userId } : {}

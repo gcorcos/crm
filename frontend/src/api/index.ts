@@ -141,5 +141,5 @@ export const dashboardApi = {
   pipeline: () => api.get('/dashboard/pipeline').then((r) => r.data),
   expiringContracts: () => api.get<Contract[]>('/dashboard/expiring-contracts').then((r) => r.data),
   leadSources: () => api.get<{ source: string; count: number }[]>('/dashboard/lead-sources').then((r) => r.data),
-  monthlyRevenue: (year: number) => api.get('/reports/revenue', { params: { period: 'month', year } }).then((r) => r.data),
+  monthlyRevenue: (year: number) => api.get('/dashboard/monthly-revenue', { params: { year } }).then((r) => r.data),
 }
