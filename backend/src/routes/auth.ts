@@ -8,30 +8,35 @@ const router = Router()
 
 // POST /api/auth/login
 router.post('/login', async (req: Request, res: Response) => {
-  const { email, password } = req.body
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email et mot de passe requis' })
+  try {
+    const { email, password } = req.body
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email et mot de passe requis' })
+    }
+    const user = await prisma.user.findUnique({ where: { email } })
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: 'Identifiants invalides' })
+    }
+    const valid = await bcrypt.compare(password, user.password)
+    if (!valid) {
+      return res.status(401).json({ error: 'Identifiants invalides' })
+    }
+    const payload = { userId: user.id, email: user.email, role: user.role }
+    return res.json({
+      accessToken: signAccess(payload),
+      refreshToken: signRefresh(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+    })
+  } catch (err) {
+    console.error('[login error]', err)
+    return res.status(500).json({ error: 'Erreur serveur interne' })
   }
-  const user = await prisma.user.findUnique({ where: { email } })
-  if (!user || !user.isActive) {
-    return res.status(401).json({ error: 'Identifiants invalides' })
-  }
-  const valid = await bcrypt.compare(password, user.password)
-  if (!valid) {
-    return res.status(401).json({ error: 'Identifiants invalides' })
-  }
-  const payload = { userId: user.id, email: user.email, role: user.role }
-  return res.json({
-    accessToken: signAccess(payload),
-    refreshToken: signRefresh(payload),
-    user: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-    },
-  })
 })
 
 // POST /api/auth/refresh
