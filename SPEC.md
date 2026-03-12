@@ -1,6 +1,6 @@
-# CRM — Spécification Produit & Backlog MVP
+# CRM — Spécification Produit & Backlog
 
-> Architecte produit + Tech Lead · Date : 2026-02-28
+> Architecte produit + Tech Lead · Créé : 2026-02-28 · Mis à jour : 2026-03-09
 
 ---
 
@@ -23,18 +23,20 @@
 ## 2. Entités & Relations (ERD Texte)
 
 ```
-TENANT (multitenant optionnel)
-  └── USER (role: admin | manager | sales | readonly)
+ORGANIZATION (multitenant)
+  └── USER (role: ADMIN | MANAGER | SALES | READONLY)
 
 USER ──< LEAD
-  Lead: id, prenom, nom, email, telephone, societe, source, statut, score, owner_id, created_at
+  Lead: id, firstName, lastName, email, phone, company, source, status, score,
+        notes, ownerId, organizationId, createdAt
 
 LEAD ──> ACCOUNT (conversion)
 LEAD ──> CONTACT (conversion)
 LEAD ──> OPPORTUNITY (conversion)
 
 ACCOUNT
-  Account: id, nom, secteur, taille, site_web, adresse, owner_id, created_at
+  Account: id, name, industry, size, website, address, city, country,
+           notes, ownerId, organizationId, createdAt
 
 ACCOUNT ──< CONTACT
 ACCOUNT ──< OPPORTUNITY
@@ -42,34 +44,36 @@ ACCOUNT ──< CONTRACT
 ACCOUNT ──< ORDER
 
 CONTACT
-  Contact: id, prenom, nom, email, telephone, poste, account_id, owner_id
+  Contact: id, firstName, lastName, email, phone, title, role,
+           accountId, ownerId, organizationId
 
 OPPORTUNITY
-  Opportunity: id, nom, montant, devise, etape, probabilite, date_cloture,
-               account_id, contact_id, owner_id, created_at
+  Opportunity: id, name, amount, currency, stage, probability, closeDate,
+               lostReason, notes, accountId, contactId, ownerId, createdAt
 
 OPPORTUNITY ──< ACTIVITY
 OPPORTUNITY ──> CONTRACT (gagné)
 CONTRACT ──> ORDER
 
 CONTRACT
-  Contract: id, numero, montant, statut, date_debut, date_fin,
-            account_id, opportunity_id, signe_le, owner_id
+  Contract: id, number (CTR-YYYY-XXXX), amount, status, startDate, endDate,
+            notes, accountId, opportunityId, ownerId, createdAt
 
 ORDER
-  Order: id, numero, montant_total, statut, date_commande,
-         contract_id, account_id, owner_id
+  Order: id, number (CMD-YYYY-XXXX), totalAmount, status, orderDate,
+         notes, contractId, accountId, ownerId
 
-ACTIVITY (Tasks/Activités)
-  Activity: id, type (appel|email|réunion|tâche), sujet, description,
-            statut, due_date, done_at, owner_id,
-            related_type (lead|opportunity|contact|account), related_id
+ACTIVITY
+  Activity: id, type (CALL|EMAIL|MEETING|TASK|NOTE), subject, description,
+            status (TODO|IN_PROGRESS|DONE|CANCELLED), dueDate, doneAt,
+            ownerId, relatedType (LEAD|OPPORTUNITY|CONTACT|ACCOUNT), relatedId,
+            leadId?, opportunityId?, contactId?, accountId?
 
 REPORT
-  Report: id, nom, type, filtres (JSON), colonnes (JSON), owner_id, shared
+  Report: id, name, type, filters (JSON), columns (JSON), shared, ownerId
 
-DASHBOARD
-  Dashboard: id, nom, widgets (JSON), owner_id
+AUDIT_LOG
+  AuditLog: id, entity, entityId, action, before (JSON), after (JSON), userId, createdAt
 ```
 
 ---
@@ -77,59 +81,61 @@ DASHBOARD
 ## 3. Règles Métier par Module
 
 ### 3.1 Leads
-| Règle | Détail |
-|-------|--------|
-| Statuts | `Nouveau → Contacté → Qualifié → Converti / Perdu` |
-| Conversion | Crée automatiquement Account + Contact + Opportunity |
-| Score | 0–100, calculé sur : email renseigné (+20), tél (+15), société (+15), activité récente (+50) |
-| Dédoublonnage | Alerte si email déjà existant |
-| Owner | Obligatoire — assigné à soi-même par défaut |
+| Règle | Détail | Statut |
+|-------|--------|--------|
+| Statuts | `NEW → CONTACTED → QUALIFIED → CONVERTED / LOST` | ✅ |
+| Conversion | Crée automatiquement Account + Contact + Opportunity | ✅ |
+| Score | 0–100 (email +20, tél +15, société +15, activité récente +50) | ✅ |
+| Dédoublonnage | Alerte si email déjà existant | ✅ |
+| Owner | Obligatoire — assigné à soi-même par défaut | ✅ |
 
 ### 3.2 Opportunités
-| Règle | Détail |
-|-------|--------|
-| Étapes (pipeline) | `Prospection → Qualification → Proposition → Négociation → Gagné / Perdu` |
-| Probabilité | Liée à l'étape (0/20/40/60/80/100 %) — modifiable manuellement |
-| Montant | Obligatoire, > 0 |
-| Date clôture | Obligatoire |
-| Transition Gagné | Déclenche la création d'un Contrat (optionnel) |
-| Transition Perdu | Motif obligatoire |
+| Règle | Détail | Statut |
+|-------|--------|--------|
+| Étapes | `PROSPECTING → QUALIFICATION → PROPOSAL → NEGOTIATION → WON / LOST` | ✅ |
+| Probabilité | Liée à l'étape (10/20/40/60/100/0 %) — modifiable | ✅ |
+| Montant | Obligatoire, > 0 | ✅ |
+| Date clôture | Obligatoire | ✅ |
+| Transition Gagné | Bouton "Créer contrat" disponible | ✅ |
+| Transition Perdu | Motif obligatoire | ✅ |
 
 ### 3.3 Comptes
-| Règle | Détail |
-|-------|--------|
-| Nom | Unique par tenant |
-| Secteur | Liste fermée (Tech, Finance, Santé, Retail, Industrie, Autre) |
-| Suppression | Bloquée si Contacts ou Opportunités actives rattachées |
+| Règle | Détail | Statut |
+|-------|--------|--------|
+| Nom | Unique par tenant | ✅ |
+| Secteur | Tech, Finance, Santé, Retail, Industrie, Autre | ✅ |
+| Suppression | Bloquée si Contacts ou Opportunités rattachées | ✅ |
+| Fiche | Contacts, Opportunités, Contrats, Commandes liés | ✅ |
 
 ### 3.4 Contacts
-| Règle | Détail |
-|-------|--------|
-| Email | Unique par compte |
-| Account | Obligatoire |
-| Rôle décisionnel | Champ optionnel (Décideur, Influenceur, Utilisateur) |
+| Règle | Détail | Statut |
+|-------|--------|--------|
+| Email | Unique par compte | ✅ |
+| Account | Obligatoire | ✅ |
+| Rôle décisionnel | Décideur, Influenceur, Utilisateur (optionnel) | ✅ |
 
 ### 3.5 Tâches / Activités
-| Règle | Détail |
-|-------|--------|
-| Statuts | `À faire → En cours → Terminé / Annulé` |
-| Due date | Alerte si dépassée et non terminée |
-| Liaison | Toujours liée à 1 entité (lead, opp, contact, compte) |
-| Rappel | Email J-1 + le jour J (v1) |
+| Règle | Détail | Statut |
+|-------|--------|--------|
+| Types | CALL, EMAIL, MEETING, TASK, NOTE | ✅ |
+| Statuts | `TODO → IN_PROGRESS → DONE / CANCELLED` | ✅ |
+| Due date | Alerte visuelle si dépassée et non terminée | ✅ |
+| Liaison | Toujours liée à 1 entité (lead, opp, contact, compte) | ✅ |
+| Rappel email | Cron J-1 et J0 via nodemailer | ✅ |
 
 ### 3.6 Contrats
-| Règle | Détail |
-|-------|--------|
-| Statuts | `Brouillon → En révision → Signé → Actif → Expiré / Résilié` |
-| Date fin | Alerte 30 jours avant expiration |
-| Numéro | Auto-incrémenté (CTR-YYYY-XXXX) |
+| Règle | Détail | Statut |
+|-------|--------|--------|
+| Statuts | `DRAFT → REVIEW → SIGNED → ACTIVE → EXPIRED / TERMINATED` | ✅ |
+| Date fin | Alerte 30 jours avant expiration (dashboard + cron) | ✅ |
+| Numéro | Auto-incrémenté CTR-YYYY-XXXX | ✅ |
 
 ### 3.7 Commandes
-| Règle | Détail |
-|-------|--------|
-| Statuts | `En attente → Confirmée → En cours → Livrée → Annulée` |
-| Numéro | Auto-incrémenté (CMD-YYYY-XXXX) |
-| Lien contrat | Optionnel |
+| Règle | Détail | Statut |
+|-------|--------|--------|
+| Statuts | `PENDING → CONFIRMED → IN_PROGRESS → DELIVERED / CANCELLED` | ✅ |
+| Numéro | Auto-incrémenté CMD-YYYY-XXXX | ✅ |
+| Lien contrat | Optionnel | ✅ |
 
 ---
 
@@ -143,107 +149,150 @@ DASHBOARD
 | Supprimer | ✅ | ✅ équipe | ❌ | ❌ |
 | Gérer utilisateurs | ✅ | ❌ | ❌ | ❌ |
 | Voir rapports | ✅ | ✅ | limité | ✅ |
-| Exporter | ✅ | ✅ | ✅ | ❌ |
+| Exporter CSV | ✅ | ✅ | ✅ | ❌ |
 | Configurer dashboards | ✅ | ✅ | perso | ❌ |
 
 ---
 
-## 5. KPI Dashboard
+## 5. Dashboard & KPIs implémentés
 
-### Pipeline
-- Valeur totale pipeline (somme montants opps ouvertes)
-- Valeur pondérée (montant × probabilité)
-- Nombre d'opps par étape (Kanban counts)
-- Velocity : durée moyenne par étape
-
-### Conversion
-- Taux Lead → Opp (nb convertis / nb créés)
-- Taux Opp → Gagné (nb gagnés / nb fermés)
-- Motifs de perte (top 5)
-
-### Chiffre d'Affaires
-- CA signé (mois en cours / trimestre / année)
-- CA prévisionnel (opps Négociation + Proposition)
-- CA par commercial
-
-### Activités
-- Activités du jour / semaine par commercial
-- Taux de complétion des tâches
+### KPI Cards
+- Pipeline total (somme montants opps ouvertes)
+- Pipeline pondéré (montant × probabilité)
+- CA ce mois / cette année (opps WON)
+- Taux de conversion Leads (convertis / total)
 - Activités en retard
 
----
+### Graphiques (Recharts)
+- **BarChart CA mensuel** : 6 derniers mois, données depuis `/api/dashboard/monthly-revenue`
+- **PieChart sources leads** : répartition par source (`/api/dashboard/lead-sources`)
+- **BarChart horizontal pipeline** : montant par étape (hors WON/LOST)
 
-## 6. Backlog MVP — Sprint 1 & 2 (2 semaines)
-
-### Sprint 1 (Sem 1) — Fondations
-| # | User Story | Priorité |
-|---|-----------|---------|
-| US-01 | En tant qu'Admin, je peux créer/inviter des utilisateurs et leur assigner un rôle | Must |
-| US-02 | En tant qu'utilisateur, je peux me connecter / déconnecter (JWT) | Must |
-| US-03 | En tant que Sales, je peux créer et lister des Leads | Must |
-| US-04 | En tant que Sales, je peux modifier le statut d'un Lead | Must |
-| US-05 | En tant que Sales, je peux créer et lister des Comptes | Must |
-| US-06 | En tant que Sales, je peux créer et lister des Contacts liés à un Compte | Must |
-| US-07 | En tant que Sales, je peux créer une Opportunité et la visualiser en liste | Must |
-| US-08 | En tant que Sales, je vois le Kanban des Opportunités par étape | Must |
-
-### Sprint 2 (Sem 2) — Cœur métier
-| # | User Story | Priorité |
-|---|-----------|---------|
-| US-09 | En tant que Sales, je peux convertir un Lead en Compte + Contact + Opportunité | Must |
-| US-10 | En tant que Sales, je peux créer et gérer des Tâches/Activités liées à une entité | Must |
-| US-11 | En tant que Sales, je vois un Dashboard avec les KPI principaux (pipeline, CA, activités) | Must |
-| US-12 | En tant que Manager, je vois les données de mon équipe | Must |
-| US-13 | En tant qu'utilisateur, je peux filtrer et rechercher dans toutes les listes | Should |
-| US-14 | En tant qu'Admin, je peux configurer les champs obligatoires | Could |
+### Alertes
+- Contrats expirant dans 30 jours (liste avec badge jours restants)
 
 ---
 
-## 7. Backlog V1 — Semaines 3–6
+## 6. Backlog — Statut complet
 
-### Semaine 3 — Contrats & Commandes
-- US-15 : Créer / signer un Contrat depuis une Opportunité gagnée
-- US-16 : Créer une Commande liée à un Contrat
-- US-17 : Workflow statuts Contrat + alertes expiration
+### MVP Sprint 1 & 2
+| # | User Story | Statut |
+|---|-----------|--------|
+| US-01 | Admin : créer/inviter utilisateurs + rôle | ✅ Livré |
+| US-02 | Login / déconnexion JWT + refresh token | ✅ Livré |
+| US-03 | Sales : créer et lister des Leads | ✅ Livré |
+| US-04 | Sales : modifier le statut d'un Lead | ✅ Livré |
+| US-05 | Sales : créer et lister des Comptes | ✅ Livré |
+| US-06 | Sales : créer et lister des Contacts liés à un Compte | ✅ Livré |
+| US-07 | Sales : créer une Opportunité + liste | ✅ Livré |
+| US-08 | Sales : Kanban des Opportunités par étape | ✅ Livré |
+| US-09 | Sales : convertir un Lead → Compte + Contact + Opportunité | ✅ Livré |
+| US-10 | Sales : créer et gérer des Activités liées à une entité | ✅ Livré |
+| US-11 | Dashboard KPI (pipeline, CA, activités, conversion) | ✅ Livré |
+| US-12 | Manager : voir les données de son équipe | ✅ Livré |
+| US-13 | Filtres + recherche dans toutes les listes | ✅ Livré |
+| US-14 | Admin : configurer champs obligatoires | ⏭ Non livré (Could) |
 
-### Semaine 4 — Rapports & Export
-- US-18 : Générateur de rapports (filtres, colonnes, tri)
-- US-19 : Export CSV / Excel des listes et rapports
-- US-20 : Rapport CA par période et par commercial
+### V1 — Contrats & Commandes
+| # | User Story | Statut |
+|---|-----------|--------|
+| US-15 | Créer / signer un Contrat depuis une Opportunité gagnée | ✅ Livré |
+| US-16 | Créer une Commande liée à un Contrat | ✅ Livré |
+| US-17 | Workflow statuts Contrat + alertes expiration 30j | ✅ Livré |
 
-### Semaine 5 — UX & Notifications
-- US-21 : Rappels email sur tâches (J-1, J0)
-- US-22 : Alertes contrats expirant dans 30 jours
-- US-23 : Vue Timeline des activités sur une fiche
-- US-24 : Recherche globale (tous modules)
+### V1 — Rapports & Export
+| # | User Story | Statut |
+|---|-----------|--------|
+| US-18 | Générateur de rapports (filtres, colonnes) | ✅ Livré |
+| US-19 | Export CSV des listes et rapports | ✅ Livré |
+| US-20 | Rapport CA par période et par commercial | ✅ Livré |
 
-### Semaine 6 — Qualité & Options
-- US-25 : i18n FR / EN (bascule langue utilisateur)
-- US-26 : Multitenant (isolation données par organisation)
-- US-27 : Audit log (qui a modifié quoi, quand)
-- US-28 : API REST documentée (Swagger/OpenAPI)
+### V1 — UX & Notifications
+| # | User Story | Statut |
+|---|-----------|--------|
+| US-21 | Rappels email sur tâches (J-1, J0) via cron | ✅ Livré |
+| US-22 | Alertes contrats expirant dans 30 jours | ✅ Livré |
+| US-23 | Timeline des activités sur chaque fiche | ✅ Livré |
+| US-24 | Recherche globale (Leads, Comptes, Contacts, Opps) | ✅ Livré |
+
+### V1 — Qualité & Options
+| # | User Story | Statut |
+|---|-----------|--------|
+| US-25 | i18n FR / EN (bascule langue) | ✅ Livré |
+| US-26 | Multitenant — isolation données par organisation | ✅ Livré |
+| US-27 | Audit log (qui a modifié quoi, quand) | ✅ Livré |
+| US-28 | API REST documentée Swagger / OpenAPI | ✅ Livré |
+
+### V1 — UX Fiches & Profil
+| # | User Story | Statut |
+|---|-----------|--------|
+| US-29 | Fiche Compte détaillée (contacts, opps, contrats, commandes, timeline) | ✅ Livré |
+| US-30 | Fiche Contact détaillée (compte lié, opps, timeline) | ✅ Livré |
+| US-31 | Profil utilisateur (modifier infos + changer mot de passe) | ✅ Livré |
+| US-32 | Dashboard graphiques Recharts (CA mensuel, pipeline, sources) | ✅ Livré |
 
 ---
 
-## 8. Stack Technique Recommandée
+## 7. Stack Technique Réelle
 
-| Couche | Choix |
-|--------|-------|
-| Frontend | React + TypeScript + Tailwind CSS + shadcn/ui |
-| État | Zustand + React Query (TanStack) |
-| Backend | Node.js + Express (ou Fastify) + TypeScript |
-| ORM | Prisma |
-| Base de données | PostgreSQL |
-| Auth | JWT + refresh token / ou NextAuth si Next.js |
-| Tests | Vitest + Playwright (e2e) |
-| Déploiement | Docker + Railway / Render / VPS |
+| Couche | Choix retenu |
+|--------|-------------|
+| Frontend | React 18 + TypeScript + Tailwind CSS (custom design system) |
+| État | Zustand (auth) + TanStack React Query (server state) |
+| Routing | React Router v6 |
+| Charts | Recharts |
+| i18n | i18next + react-i18next |
+| HTTP client | Axios + interceptors JWT refresh |
+| Backend | Node.js 20 + Express + TypeScript |
+| ORM | Prisma 5 |
+| Base de données | PostgreSQL 16 |
+| Auth | JWT access (15min) + refresh token (7j) via jsonwebtoken |
+| Email | Nodemailer (SMTP configurable) |
+| Cron | node-cron (rappels J-1 et J0, alertes expiration) |
+| Documentation | Swagger UI + swagger-jsdoc (`/api/docs`) |
+| Déploiement | Docker multi-stage + Railway (3 services) |
 
 ---
 
-## 9. UX Patterns (inspiration Salesforce simplifié)
+## 8. Architecture de déploiement (Railway)
 
-- **Liste** : tableau paginé + filtres + tri colonnes + actions bulk
-- **Fiche** : layout 2 colonnes (infos gauche, activités/timeline droite)
-- **Pipeline Kanban** : colonnes par étape, drag & drop, badge montant
-- **Navigation** : sidebar fixe avec icônes modules
-- **Notifications** : bandeau top + badge cloche
+```
+Railway Project
+├── backend   — Node.js/Express   → https://crm-backend-production-xxxx.up.railway.app
+│   ├── Dockerfile (node:20-alpine, multi-stage)
+│   ├── CMD: prisma db push && tsx seed.ts && node dist/index.js
+│   └── Vars: DATABASE_URL, JWT_SECRET, JWT_REFRESH_SECRET, FRONTEND_URL, PORT
+│
+├── frontend  — nginx/React SPA   → https://crm-frontend-production-xxxx.up.railway.app
+│   ├── Dockerfile (node:20-alpine builder → nginx:alpine)
+│   ├── docker-entrypoint.sh → génère /config.js avec window.__API_URL__
+│   └── Vars: BACKEND_URL (= URL backend + /api)
+│
+└── postgresql — PostgreSQL 16    → connexion interne Railway
+```
+
+---
+
+## 9. UX Patterns implémentés
+
+- **Liste** : tableau paginé + barre de recherche + filtres par statut + export CSV
+- **Fiche** : layout 2 colonnes (infos + métadonnées gauche, timeline activités droite)
+- **Pipeline Kanban** : 4 colonnes (Prospection → Négociation), boutons de déplacement rapide
+- **Navigation** : sidebar fixe 64px avec icônes + labels, badge rôle utilisateur
+- **Recherche globale** : input dans header, dropdown résultats avec debounce 300ms
+- **Alertes visuelles** : activités en retard (rouge), contrats expirant (orange), badges colorés
+
+---
+
+## 10. Prochaines étapes — V2
+
+| # | Feature | Priorité |
+|---|---------|---------|
+| US-33 | Drag & drop natif sur le Kanban | Should |
+| US-34 | Notifications in-app (badge cloche) | Should |
+| US-35 | Export Excel (xlsx) en plus du CSV | Could |
+| US-36 | Import CSV de Leads / Contacts | Could |
+| US-37 | Dashboard personnalisable (widgets glissables) | Could |
+| US-38 | Vue calendrier des activités | Could |
+| US-39 | Signature électronique des contrats | Could |
+| US-40 | API webhooks sortants | Could |
